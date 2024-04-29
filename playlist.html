@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Playlist</title>
+    <style>
+        /* Style for the modal */
+        #playlistModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        iframe{      
+        display: block;  /* iframes are inline by default */   
+        height: 100vh;  /* Set height to 100% of the viewport height */   
+        width: 100vw;  /* Set width to 100% of the viewport width */     
+        border: none; /* Remove default border */
+        background: lightyellow; /* Just for styling */
+    }
+    </style>
+</head>
+<body>
+
+<div id="playlistModal">
+    <h2>Create Playlist</h2>
+    <input type="text" id="websiteInput" placeholder="Enter website URL">
+    <input type="text" id="songDurationInput" placeholder="Song duration (mm:ss)">
+    <button id="addWebsiteBtn">Add Website</button>
+    <ul id="websiteList"></ul>
+    <button id="savePlaylistBtn">Save Playlist</button>
+</div>
+
+<button id="showPlaylistBtn">Create Playlist</button>
+
+<div id="websiteContainer">
+    <iframe id="websiteFrame" frameborder="0"></iframe>
+</div>
+
+<script>
+    var playlist = [];
+    var durations = []; // Store durations of each song
+    var currentIndex = 0;
+    var websiteFrame = document.getElementById('websiteFrame');
+
+    // Function to navigate to the next website in the playlist
+    function goToNextWebsite() {
+        currentIndex++;
+        if (currentIndex < playlist.length) {
+            var websiteUrl = playlist[currentIndex];
+            websiteFrame.src = websiteUrl;
+            // Wait for the duration of the current song plus 5 seconds before switching to the next one
+            setTimeout(goToNextWebsite, (durations[currentIndex] + 5) * 1000);
+        } else {
+            console.log('Playlist finished');
+        }
+    }
+
+    // Show modal when clicking a button
+    document.getElementById('showPlaylistBtn').addEventListener('click', function() {
+        document.getElementById('playlistModal').style.display = 'block';
+    });
+
+    // Add website to the playlist
+    document.getElementById('addWebsiteBtn').addEventListener('click', function() {
+        var websiteUrl = document.getElementById('websiteInput').value;
+        var duration = document.getElementById('songDurationInput').value;
+        if (websiteUrl.trim() !== '' && isValidDuration(duration)) {
+            playlist.push(websiteUrl);
+            durations.push(parseDuration(duration));
+            var websiteList = document.getElementById('websiteList');
+            var listItem = document.createElement('li');
+            listItem.textContent = websiteUrl + ' (' + duration + ')';
+            websiteList.appendChild(listItem);
+            document.getElementById('websiteInput').value = '';
+            document.getElementById('songDurationInput').value = '';
+        }
+    });
+
+    // Save playlist to localStorage and start playing
+    document.getElementById('savePlaylistBtn').addEventListener('click', function() {
+        localStorage.setItem('websitePlaylist', JSON.stringify(playlist));
+        localStorage.setItem('songDurations', JSON.stringify(durations));
+        document.getElementById('playlistModal').style.display = 'none';
+        if (playlist.length > 0) {
+            websiteFrame.src = playlist[0];
+            // Wait for the duration of the first song before switching to the next one
+            setTimeout(goToNextWebsite, (durations[0] + 5) * 1000);
+        }
+    });
+
+    // Validate if the input is in the format mm:ss
+    function isValidDuration(duration) {
+        var pattern = /^\d{1,2}:\d{2}$/;
+        return pattern.test(duration);
+    }
+
+    // Parse the duration string to seconds
+    function parseDuration(duration) {
+        var parts = duration.split(':');
+        var minutes = parseInt(parts[0]);
+        var seconds = parseInt(parts[1]);
+        return minutes * 60 + seconds;
+    }
+</script>
+
+</body>
+</html>
